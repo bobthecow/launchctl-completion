@@ -31,53 +31,6 @@
 # 
 # Distributed under the [MIT License](http://creativecommons.org/licenses/MIT/)
 
-
-__launchctlcomp_1 ()
-{
-	local c IFS=' '$'\t'$'\n'
-	for c in $1; do
-		case "$c$2" in
-		--*=*) printf %s$'\n' "$c$2" ;;
-		*.)    printf %s$'\n' "$c$2" ;;
-		*)     printf %s$'\n' "$c$2 " ;;
-		esac
-	done
-}
-__launchctlcomp ()
-{
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	if [ $# -gt 2 ]; then
-		cur="$3"
-	fi
-	case "$cur" in
-	--*=)
-		COMPREPLY=()
-		;;
-	*)
-		local IFS=$'\n'
-		COMPREPLY=($(compgen -P "${2-}" \
-			-W "$(__launchctlcomp_1 "${1-}" "${4-}")" \
-			-- "$cur"))
-		;;
-	esac
-}
-
-__launchctl_find_on_cmdline ()
-{
-	local word subcommand c=1
-
-	while [ $c -lt $COMP_CWORD ]; do
-		word="${COMP_WORDS[c]}"
-		for subcommand in $1; do
-			if [ "$subcommand" = "$word" ]; then
-				echo "$subcommand"
-				return
-			fi
-		done
-		c=$((++c))
-	done
-}
-
 __launchctl_list_labels ()
 {
 	launchctl list | tail -n +2 | grep -v -P "0x[0-9a-fA-F]+\.(anonymous|mach_init)\." | awk '{print $3}'
@@ -95,31 +48,35 @@ __launchctl_list_stopped ()
 
 _launchctl ()
 {
+	COMPREPLY=()
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	# Subcommand list
 	local subcommands="load unload submit remove start stop list help"
-	local subcommand="$(__launchctl_find_on_cmdline "$subcommands")"
-	if [ -z "$subcommand" ]; then
-		__launchctlcomp "$subcommands"
+	[[ ${COMP_CWORD} -eq 1 ]] && {
+		COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
 		return
-	fi
-	
-	case "$subcommand" in
+	}
+
+	case "$prev" in
 	remove|list)
-		__launchctlcomp "$(__launchctl_list_labels)"
+		COMPREPLY=( $(compgen -W "$(__launchctl_list_labels)" -- ${cur}) )
 		return
 		;;
 	start)
-		__launchctlcomp "$(__launchctl_list_stopped)"
+		COMPREPLY=( $(compgen -W "$(__launchctl_list_stopped)" -- ${cur}) )
 		return
 		;;
 	stop)
-		__launchctlcomp "$(__launchctl_list_started)"
+		COMPREPLY=( $(compgen -W "$(__launchctl_list_started)" -- ${cur}) )
 		return
 		;;
-	*)
-		COMPREPLY=()
+	load|unload)
+		COMPREPLU=( $(compgen -d $(pwd)) )
+		return
 		;;
 	esac
 }
 
-complete -o bashdefault -o default -o nospace -F _launchctl launchctl 2>/dev/null \
-	|| complete -o default -o nospace -F _launchctl launchctl
+complete -F _launchctl launchctl
