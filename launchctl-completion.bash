@@ -33,19 +33,18 @@
 
 __launchctl_list_labels ()
 {
-	launchctl list | tail -n +2 | grep -v -P "0x[0-9a-fA-F]+\.(anonymous|mach_init)\." | awk '{print $3}'
+	launchctl list | awk 'NR>1 && $3 !~ /0x[0-9a-fA-F]+\.(anonymous|mach_init)/ {print $3}'
 }
 
 __launchctl_list_started ()
 {
-	launchctl list | tail -n +2 | grep -v "^-" | grep -v -P "0x[0-9a-fA-F]+\.(anonymous|mach_init)\." | awk '{print $3}'
+	launchctl list | awk 'NR>1 && $3 !~ /0x[0-9a-fA-F]+\.(anonymous|mach_init)/ && $1 !~ /-/ {print $3}'
 }
 
 __launchctl_list_stopped ()
 {
-	launchctl list | tail -n +2 | grep "^-" | grep -v -P "0x[0-9a-fA-F]+\.(anonymous|mach_init)\." | awk '{print $3}'
+	launchctl list | awk 'NR>1 && $3 !~ /0x[0-9a-fA-F]+\.(anonymous|mach_init)/ && $1 ~ /-/ {print $3}'
 }
-
 _launchctl ()
 {
 	COMPREPLY=()
