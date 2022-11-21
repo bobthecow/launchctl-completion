@@ -52,7 +52,7 @@ _launchctl ()
 	local prev="${COMP_WORDS[COMP_CWORD-1]}"
 
 	# Subcommand list
-	local subcommands="load unload submit remove start stop list help"
+	local subcommands="bootstrap bootout enable disable kickstart attach debug kill blame print print-cache print-disabled plist procinfo hostinfo resolveport limit runstats examine config dumpstate dumpjpcategory reboot bootshell load unload remove list start stop setenv unsetenv getenv bsexec asuser submit managerpid manageruid managername error variant version help"
 	[[ ${COMP_CWORD} -eq 1 ]] && {
 		COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
 		return
